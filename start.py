@@ -1191,6 +1191,22 @@ def display_running_version(m2ee):
             logger.info("Model version: %s" % feedback["model_version"])
 
 
+def display_aws_metadata():
+    try:
+        document = json.loads(
+            requests.get(
+                "http://169.254.169.254/latest/dynamic/instance-identity/document"
+            ).text
+        )
+        logger.info(
+            "Availibility zone: {}".format(document["availabilityZone"])
+        )
+    except Exception:
+        logger.warning(
+            "Unable to query the AWS instance metadata, this host is not running on AWS"
+        )
+
+
 def loop_until_process_dies(m2ee):
     while True:
         if app_is_restarting or m2ee.runner.check_pid():
@@ -1324,6 +1340,7 @@ if __name__ == "__main__":
         signal.signal(signal.SIGUSR1, sigusr_handler)
         signal.signal(signal.SIGUSR2, sigusr_handler)
 
+        display_aws_metadata()
         service_backups()
         set_up_nginx_files(m2ee)
         telegraf.run()
